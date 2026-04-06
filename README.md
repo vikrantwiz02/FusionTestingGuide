@@ -1,6 +1,5 @@
-# Fusion Module Testing Guide — Universal Instructions for All Teams
+# Fusion Module Testing Guide — Instructions for All Teams
 
-> **Audience:** All 10 module teams (Mess, Complaints, Placement, Hostel, etc.)  
 > **Approach:** Specification-driven, black-box testing  
 > **Backend:** `python manage.py test applications.<module>.tests -v 2`  
 > **Full-Stack E2E:** `./e2e/run_e2e.sh`
@@ -796,58 +795,75 @@ The runner **automatically** logs it in `Defect_Log.csv`. The test will appear a
 | **Real Vite server** | Frontend runs on `http://localhost:5173` |
 | **Real PostgreSQL** | Actual database with real data |
 
-### 14.3 Setup (One-Time)
+### 14.3 Setup (Per Module)
 
 ```bash
 # From Fusion-client/ directory
 
-# 1. Install Playwright
+# 1. Install Playwright (one-time)
 npm install -D @playwright/test
 npx playwright install chromium
 
 # 2. Update test credentials with REAL users from your database
 #    Edit: e2e/helpers/auth.setup.js
 #    Set real username/password for student, staff, faculty roles
+
+# 3. Generate E2E tests for YOUR MODULE (one-time)
+node e2e/setup_e2e.js Mess           # ← Replace with your module name
+node e2e/setup_e2e.js Examination    # Another example
+node e2e/setup_e2e.js Program_curriculum
 ```
 
-### 14.4 Run Everything (Single Command)
+This creates `e2e/tests/<YourModule>/` with UC/BR/WF test templates specific to your module.
+
+### 14.4 Run YOUR Module's Tests (Single Command)
 
 ```bash
 # From Fusion-client/ directory
-./e2e/run_e2e.sh
+./e2e/run_e2e.sh Mess               # ← Only Mess tests
+./e2e/run_e2e.sh Examination        # ← Only Examination tests
+./e2e/run_e2e.sh                    # ← ALL modules (optional)
 ```
 
 This script automatically:
 1. Starts the Django backend server
 2. Starts the Vite frontend server
 3. Waits for both to be ready
-4. Runs all Playwright E2E tests
+4. Runs Playwright E2E tests **only for the specified module**
 5. Captures screenshots as evidence
 6. Generates CSV reports (same 7-sheet format)
 7. Stops both servers
 
-### 14.5 E2E File Structure
+### 14.5 E2E File Structure (Module-Specific)
 
 ```
 Fusion-client/
-├── playwright.config.js             ← Playwright configuration
+├── playwright.config.js                ← Playwright configuration
 └── e2e/
-    ├── run_e2e.sh                   ← 🔥 Single command to run everything
+    ├── setup_e2e.js                    ← Run: node e2e/setup_e2e.js <Module>
+    ├── run_e2e.sh                      ← Run: ./e2e/run_e2e.sh <Module>
     ├── helpers/
-    │   ├── auth.setup.js            ← Login helper (EDIT: set real credentials)
-    │   └── csv-reporter.js          ← Generates 7-sheet CSVs from results
+    │   ├── auth.setup.js               ← Login helper (EDIT credentials)
+    │   └── csv-reporter.js             ← CSV report generator
     ├── tests/
-    │   ├── uc.e2e.spec.js           ← UC tests (replace examples with yours)
-    │   ├── br.e2e.spec.js           ← BR tests
-    │   └── wf.e2e.spec.js           ← WF tests
-    └── reports/                     ← Auto-generated
-        ├── evidence/                ← Screenshots (auto-captured)
-        ├── html/                    ← Visual HTML report
-        ├── Module_Test_Summary.csv
-        ├── Test_Execution_Log.csv
-        ├── Defect_Log.csv
-        └── Artifact_Evaluation.csv
+    │   ├── Mess/                       ← Mess team's tests
+    │   │   ├── uc.e2e.spec.js
+    │   │   ├── br.e2e.spec.js
+    │   │   ├── wf.e2e.spec.js
+    │   │   └── reports/evidence/       ← Screenshots
+    │   ├── Examination/                ← Examination team's tests
+    │   │   ├── uc.e2e.spec.js
+    │   │   ├── br.e2e.spec.js
+    │   │   ├── wf.e2e.spec.js
+    │   │   └── reports/evidence/
+    │   └── <YourModule>/               ← Your team's tests
+    │       └── ...
+    └── reports/                        ← Shared CSV output
+        ├── html/                       ← Visual HTML report
+        └── *.csv                       ← 7-sheet workbook
 ```
+
+**Each module's tests are isolated.** Mess team only edits `e2e/tests/Mess/`. Examination team only edits `e2e/tests/Examination/`. No conflicts.
 
 ### 14.6 Test Naming Convention (Required for Reports)
 
@@ -977,12 +993,12 @@ test.describe("WF-2: Leave Request → Manager Approval", () => {
  │                      │  • Auto-screenshots as evidence  │
  │                      │                                 │
  │  Command:            │  Command:                       │
- │  python manage.py    │  ./e2e/run_e2e.sh               │
+ │  python manage.py    │  ./e2e/run_e2e.sh <Module>      │
  │  test apps.<mod>     │                                 │
  │  .tests -v 2         │  (starts both servers, runs     │
- │                      │   tests, generates reports,     │
- │  Reports: 7 CSVs     │   stops servers)                │
- │  (auto-generated)    │                                 │
+ │                      │   tests for YOUR module only,   │
+ │  Reports: 7 CSVs     │   generates reports,            │
+ │  (auto-generated)    │   stops servers)                │
  │                      │  Reports: 7 CSVs + screenshots  │
  │                      │  + HTML report + video on fail   │
  └──────────────────────┴─────────────────────────────────┘
@@ -994,14 +1010,17 @@ test.describe("WF-2: Leave Request → Manager Approval", () => {
 ### 14.9 Running E2E Tests (Commands)
 
 ```bash
-# Full automated run (recommended)
+# Full automated run — YOUR MODULE ONLY (recommended)
+./e2e/run_e2e.sh Mess
+./e2e/run_e2e.sh Examination
+
+# Run all modules
 ./e2e/run_e2e.sh
 
 # Or manually (if servers are already running):
-npx playwright test                              # All tests
-npx playwright test e2e/tests/uc.e2e.spec.js     # UC tests only
-npx playwright test e2e/tests/br.e2e.spec.js     # BR tests only
-npx playwright test e2e/tests/wf.e2e.spec.js     # WF tests only
+npx playwright test e2e/tests/Mess/                 # Only Mess
+npx playwright test e2e/tests/Examination/          # Only Examination
+npx playwright test e2e/tests/                      # All modules
 
 # Generate CSV reports after manual run
 node e2e/helpers/csv-reporter.js
@@ -1010,7 +1029,7 @@ node e2e/helpers/csv-reporter.js
 npx playwright show-report e2e/reports/html
 
 # Debug a failing test (opens browser visually)
-npx playwright test --headed --debug
+npx playwright test e2e/tests/Mess/ --headed --debug
 ```
 
 ---
@@ -1039,16 +1058,19 @@ BACKEND (Fusion/FusionIIIT/)
 E2E / FULL-STACK (Fusion-client/)
 ├── playwright.config.js                      ← Playwright configuration
 └── e2e/
-    ├── run_e2e.sh                            ← 🔥 Single command for everything
+    ├── setup_e2e.js                          ← Run: node e2e/setup_e2e.js <Module>
+    ├── run_e2e.sh                            ← Run: ./e2e/run_e2e.sh <Module>
     ├── helpers/
     │   ├── auth.setup.js                     ← Login helper (set real credentials)
     │   └── csv-reporter.js                   ← Generates 7-sheet CSVs
-    ├── tests/
-    │   ├── uc.e2e.spec.js                    ← UC E2E tests
-    │   ├── br.e2e.spec.js                    ← BR E2E tests
-    │   └── wf.e2e.spec.js                    ← WF E2E tests
-    └── reports/
-        ├── evidence/                         ← Auto-captured screenshots
-        └── *.csv                             ← 7-sheet workbook CSVs
+    └── tests/
+        ├── Mess/                             ← Mess team's E2E tests
+        │   ├── uc.e2e.spec.js
+        │   ├── br.e2e.spec.js
+        │   ├── wf.e2e.spec.js
+        │   └── reports/evidence/             ← Auto-captured screenshots
+        ├── Examination/                      ← Examination team's tests
+        └── <YourModule>/                     ← Your team's tests
 ```
+
 
