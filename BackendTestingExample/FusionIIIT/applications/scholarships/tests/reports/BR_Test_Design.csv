@@ -1,0 +1,25 @@
+BR_ID,Title,Category,Input/Action,Expected Result
+BR-SPACS-001,Eligibility Must Be Satisfied,Valid,"POST /applications/ with student meeting all criteria (CPI >= min, no backlogs)",Application accepted; record created
+BR-SPACS-001,Eligibility Must Be Satisfied,Invalid,POST /applications/ with student CPI below scholarship minimum_cgpa,Rejected with eligibility error; no application created
+BR-SPACS-002,No Duplicate Applications,Valid,POST /mcm-applications/ as student with no prior MCM application,Application created; HTTP 201
+BR-SPACS-002,No Duplicate Applications,Invalid,POST /mcm-applications/ as student who already has an MCM application,Rejected; duplicate application error
+BR-SPACS-003,Use of Previously Uploaded Documents,Valid,POST /mcm-applications/ with document link URLs (previously uploaded),Application accepted with existing document links
+BR-SPACS-003,Use of Previously Uploaded Documents,Invalid,POST /student/submit/mcm/ without income_certificate file,Rejected; income certificate file is required
+BR-SPACS-004,Application Completeness Validation,Valid,POST /mcm-applications/ with all required fields filled,Application created; HTTP 201
+BR-SPACS-004,Application Completeness Validation,Invalid,"POST /mcm-applications/ with required fields missing (e.g., student_full_name=blank)",Rejected with validation error listing missing fields
+BR-SPACS-005,Application Review Access,Valid,GET /mcm-applications/ as user with spacsassistant designation,All applications returned; access granted
+BR-SPACS-005,Application Review Access,Invalid,"GET /mcm-applications/ as student (sees only own applications, not all)",Only student's own applications returned; cannot see others
+BR-SPACS-007,Draft Save on Timeout or Error,Valid,POST /mcm-applications/ with partial data to save initial application,Application record persisted with submitted data
+BR-SPACS-007,Draft Save on Timeout or Error,Invalid,POST /mcm-applications/ with completely empty required fields,Validation error; no application created
+BR-SPACS-008,Notification on Status Change,Valid,PATCH /mcm-applications/<pk>/ changing status from pending to verified (triggers notification logic),Status changed; notification attempt triggered in service layer
+BR-SPACS-008,Notification on Status Change,Invalid,"GET /mcm-applications/<pk>/ (read-only, no status change)",No notification triggered; status unchanged
+BR-SPACS-009,Withdrawal Before Review,Valid,"Student views own pending application (pre-review, status=pending)",Application visible; status indicates pre-review state
+BR-SPACS-009,Withdrawal Before Review,Invalid,Student attempts status change on application in verified/approved state,Blocked; cannot modify applications past review stage
+BR-SPACS-010,Only Owner Can Edit or Withdraw the Application,Valid,PATCH /mcm-applications/<pk>/ as the application owner (student who created it),Modification accepted (if status allows)
+BR-SPACS-010,Only Owner Can Edit or Withdraw the Application,Invalid,PATCH /mcm-applications/<pk>/ as a different student (not the owner),Application not in queryset; cannot modify
+BR-SPACS-012,Download/Print Access Control,Valid,GET /mcm-applications/<pk>/ as the owning student,Application data returned; HTTP 200
+BR-SPACS-012,Download/Print Access Control,Invalid,GET /mcm-applications/<pk>/ as non-owner student,Empty queryset or no data; cannot access others' applications
+BR-SPACS-013,Escalation & SLA for Reviews,Valid,PATCH /mcm-applications/<pk>/ status=verified within SLA (convener acting on verified),Status changed normally; no escalation needed
+BR-SPACS-013,Escalation & SLA for Reviews,Invalid,Convener attempts to act on non-verified application,Blocked; convener can only act on verified applications
+BR-SPACS-014,Catalog Versioning & Published Source of Truth,Valid,POST /applications/ referencing an ExtendedScholarshipType with is_active=True,Application accepted; uses active catalogue entry
+BR-SPACS-014,Catalog Versioning & Published Source of Truth,Invalid,POST /applications/ referencing an ExtendedScholarshipType with is_active=False,Rejected; scholarship is no longer active

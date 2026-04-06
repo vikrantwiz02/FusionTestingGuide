@@ -1,0 +1,25 @@
+Test_ID,Scenario,Outcome,Error Details,Status,Severity
+,,Error,"Traceback (most recent call last):
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 60, in testPartExecutor
+    yield
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 676, in run
+    self._callTestMethod(testMethod)
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 633, in _callTestMethod
+    method()
+  File ""C:\Users\harsh kumar palas\AppD",Open,High
+,,Error,"Traceback (most recent call last):
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 60, in testPartExecutor
+    yield
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 676, in run
+    self._callTestMethod(testMethod)
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 633, in _callTestMethod
+    method()
+  File ""C:\Users\harsh kumar palas\AppD",Open,High
+,,Error,"Traceback (most recent call last):
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 60, in testPartExecutor
+    yield
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 676, in run
+    self._callTestMethod(testMethod)
+  File ""C:\Users\harsh kumar palas\AppData\Local\Programs\Python\Python38\lib\unittest\case.py"", line 633, in _callTestMethod
+    method()
+  File ""C:\Users\harsh kumar palas\AppD",Open,High
