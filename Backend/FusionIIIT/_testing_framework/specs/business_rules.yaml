@@ -1,0 +1,71 @@
+# ============================================================
+# BUSINESS RULES SPECIFICATION — YAML Template
+# ============================================================
+#
+# INSTRUCTIONS:
+#   1. Get your module's BR specification document
+#   2. For EACH Business Rule, add an entry under "business_rules:"
+#   3. Each BR MUST have at minimum:
+#       - 1 valid_test (rule is satisfied, action accepted)
+#       - 1 invalid_test (rule is violated, action rejected)
+#   4. This gives: Required BR Tests = 2 × Number of BRs
+#
+# FIELDS EXPLANATION:
+#   id:          Unique BR identifier (e.g., BR-1, BR-01)
+#   title:       Short title from your specification
+#   description: Full rule statement
+#   constraint:  What the rule enforces
+#
+#   valid_tests:   Tests where the rule SHOULD ALLOW the action
+#   invalid_tests: Tests where the rule SHOULD BLOCK the action
+# ============================================================
+
+business_rules:
+
+  # ── EXAMPLE BR (DELETE AND REPLACE WITH YOUR OWN) ──
+
+  - id: "BR-1"
+    title: "Casual leave duration constraint"
+    description: "Casual leave can only be between 3 and 5 days"
+    constraint: "3 <= number_of_days <= 5 for casual leave"
+
+    valid_tests:
+      - input_action: "Apply casual leave for exactly 3 days"
+        expected_result: "Leave request accepted (status=1)"
+
+      - input_action: "Apply casual leave for exactly 5 days"
+        expected_result: "Leave request accepted (status=1)"
+
+    invalid_tests:
+      - input_action: "Apply casual leave for 2 days"
+        expected_result: "Leave request rejected (status=4, duration error)"
+
+      - input_action: "Apply casual leave for 6 days"
+        expected_result: "Leave request rejected (status=4, duration error)"
+
+  - id: "BR-2"
+    title: "No overlapping leave dates"
+    description: "Student cannot apply for leave with dates overlapping an existing leave"
+    constraint: "New leave dates must not overlap any pending or approved leave"
+
+    valid_tests:
+      - input_action: "Apply leave for dates with no overlap"
+        expected_result: "Leave request accepted"
+
+    invalid_tests:
+      - input_action: "Apply leave for dates that overlap existing approved leave"
+        expected_result: "Request rejected with overlap error (status=3)"
+
+  # ── ADD YOUR BUSINESS RULES BELOW ──
+  # Copy the template above and fill in your module's BRs.
+  #
+  # - id: "BR-3"
+  #   title: "Your Rule Title"
+  #   description: "Rule description from spec"
+  #   constraint: "What is enforced"
+  #   valid_tests:
+  #     - input_action: "..."
+  #       expected_result: "..."
+  #   invalid_tests:
+  #     - input_action: "..."
+  #       expected_result: "..."

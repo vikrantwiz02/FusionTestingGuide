@@ -1,0 +1,73 @@
+# ============================================================
+# WORKFLOWS SPECIFICATION — YAML Template
+# ============================================================
+#
+# INSTRUCTIONS:
+#   1. Get your module's WF specification document
+#   2. For EACH Workflow, add an entry under "workflows:"
+#   3. Each WF MUST have at minimum:
+#       - 1 e2e_test (complete happy-path end-to-end flow)
+#       - 1 negative_test (failure/interruption in the flow)
+#   4. This gives: Required WF Tests = 2 × Number of WFs
+#
+# FIELDS EXPLANATION:
+#   id:          Unique WF identifier (e.g., WF-1, WF-01)
+#   title:       Short title from your specification
+#   description: Full workflow description
+#   states:      List of states in the workflow
+#   transitions: List of state transitions
+#
+#   e2e_tests:      End-to-end complete flow tests
+#   negative_tests: Failure/interruption/rejection tests
+#   exit_tests:     Alternate exit point tests
+# ============================================================
+
+workflows:
+
+  # ── EXAMPLE WF (DELETE AND REPLACE WITH YOUR OWN) ──
+
+  - id: "WF-1"
+    title: "Mess Registration Workflow"
+    description: "Student registers for mess → Manager approves → Student is registered"
+    states:
+      - "Unregistered"
+      - "Pending Approval"
+      - "Registered"
+      - "Rejected"
+    transitions:
+      - from: "Unregistered"
+        to: "Pending Approval"
+        action: "Student submits registration request"
+      - from: "Pending Approval"
+        to: "Registered"
+        action: "Manager approves request"
+      - from: "Pending Approval"
+        to: "Rejected"
+        action: "Manager rejects request"
+
+    e2e_tests:
+      - scenario: "Student submits registration, manager approves, student becomes registered"
+        expected_final_state: "Student status = Registered, balance updated, payment recorded"
+
+    negative_tests:
+      - scenario: "Student submits registration, manager rejects, student remains unregistered"
+        expected_final_state: "Student status = Unregistered/Rejected, no balance change"
+
+    exit_tests:
+      - scenario: "Student submits registration but manager never responds"
+        expected_final_state: "Request stays in pending state indefinitely"
+
+  # ── ADD YOUR WORKFLOWS BELOW ──
+  # Copy the template above and fill in your module's WFs.
+  #
+  # - id: "WF-2"
+  #   title: "Your Workflow"
+  #   description: "..."
+  #   states: [...]
+  #   transitions: [...]
+  #   e2e_tests:
+  #     - scenario: "..."
+  #       expected_final_state: "..."
+  #   negative_tests:
+  #     - scenario: "..."
+  #       expected_final_state: "..."

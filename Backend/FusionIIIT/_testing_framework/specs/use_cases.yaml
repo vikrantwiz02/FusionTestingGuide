@@ -1,0 +1,82 @@
+# ============================================================
+# USE CASES SPECIFICATION — YAML Template
+# ============================================================
+#
+# INSTRUCTIONS:
+#   1. Get your module's UC specification document
+#   2. For EACH Use Case, add an entry under "use_cases:"
+#   3. Each UC MUST have at minimum:
+#       - 1 happy_path test
+#       - 1 alternate_path test
+#       - 1 exception_path test
+#   4. This gives: Required UC Tests = 3 × Number of UCs
+#
+# FIELDS EXPLANATION:
+#   id:             Unique UC identifier (e.g., UC-1, UC-01, UC-REGISTER)
+#   title:          Short title from your specification
+#   description:    Full UC description
+#   actors:         Who performs this use case
+#   preconditions:  What must be true before this UC can execute
+#
+#   happy_paths:    Normal/expected flow tests
+#   alternate_paths: Valid but non-standard flow tests
+#   exception_paths: Error/restriction/boundary tests
+#
+# For each test, provide:
+#   scenario:        What is being tested (human-readable)
+#   preconditions:   Setup required for this specific test
+#   input_action:    What the test does (API call, UI action, etc.)
+#   expected_result: What should happen
+# ============================================================
+
+use_cases:
+
+  # ── EXAMPLE UC (DELETE AND REPLACE WITH YOUR OWN) ──
+
+  - id: "UC-1"
+    title: "Submit Feedback"
+    description: "Student submits feedback about mess food/cleanliness/maintenance"
+    actors: "Student"
+    preconditions: "Student is registered in the mess system"
+
+    happy_paths:
+      - scenario: "Student submits feedback with all required fields"
+        preconditions: "Student is logged in and registered"
+        input_action: "POST /module/api/feedbackApi with {mess, feedback_type, description}"
+        expected_result: "Feedback created successfully, status 200 returned"
+
+    alternate_paths:
+      - scenario: "Student submits feedback with different feedback types"
+        preconditions: "Student is logged in and registered"
+        input_action: "POST /module/api/feedbackApi with feedback_type='maintenance'"
+        expected_result: "Feedback created with type=maintenance"
+
+    exception_paths:
+      - scenario: "Unregistered student tries to submit feedback"
+        preconditions: "Student is logged in but NOT registered in mess"
+        input_action: "POST /module/api/feedbackApi with valid data"
+        expected_result: "Error returned, feedback not created"
+
+  # ── ADD YOUR USE CASES BELOW ──
+  # Copy the template above and fill in your module's UCs.
+  #
+  # - id: "UC-2"
+  #   title: "Your Use Case Title"
+  #   description: "Description from spec document"
+  #   actors: "Actor"
+  #   preconditions: "Preconditions"
+  #   happy_paths:
+  #     - scenario: "..."
+  #       preconditions: "..."
+  #       input_action: "..."
+  #       expected_result: "..."
+  #   alternate_paths:
+  #     - scenario: "..."
+  #       preconditions: "..."
+  #       input_action: "..."
+  #       expected_result: "..."
+  #   exception_paths:
+  #     - scenario: "..."
+  #       preconditions: "..."
+  #       input_action: "..."
+  #       expected_result: "..."

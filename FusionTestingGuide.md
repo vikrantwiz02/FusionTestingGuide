@@ -1,7 +1,9 @@
-# Fusion Module Testing Guide — Instructions for All Teams
+# Fusion Module Testing Guide — Universal Instructions for All Teams
 
+> **Audience:** All 10 module teams (Mess, Complaints, Placement, Hostel, etc.)  
 > **Approach:** Specification-driven, black-box testing  
-> **One Command:** `python manage.py test applications.<module>.tests -v 2`
+> **Backend:** `python manage.py test applications.<module>.tests -v 2`  
+> **Full-Stack E2E:** `./e2e/run_e2e.sh`
 
 ---
 
@@ -20,7 +22,7 @@
 11. [Complete Worked Example](#11-complete-worked-example)
 12. [Common Patterns & Recipes](#12-common-patterns)
 13. [FAQ](#13-faq)
-14. [Frontend Testing (React / Vite)](#14-frontend-testing-react--vite)
+14. [Full-Stack E2E Testing (Playwright)](#14-full-stack-e2e-testing-playwright)
 
 ---
 
@@ -771,295 +773,245 @@ The runner **automatically** logs it in `Defect_Log.csv`. The test will appear a
 
 ---
 
-## 14. Frontend Testing (React / Vite)
+## 14. Full-Stack E2E Testing (Playwright)
 
 > [!IMPORTANT]
-> The backend framework (Sections 1–13) covers **API + DB testing**. This section covers **UI testing** — verifying that React components render correctly, forms validate properly, and user flows work in the browser.
+> The backend framework (Sections 1–13) covers **API + DB testing in isolation**. This section covers **full-stack integration testing** — a real browser → real frontend → real backend → real database. **No mocks. Everything connected.**
 
-### 14.1 When to Test Frontend
+### 14.1 What E2E Tests Prove
 
-| Scenario | Do you test frontend? |
-|----------|----------------------|
-| Module has real React components (forms, tables, pages) | ✅ Yes |
-| Module is only a placeholder/stub (e.g., `<div>Content</div>`) | ❌ No — note as "Not Implemented" in Artifact_Evaluation |
-| Module uses Django templates only (old UI) | ❌ No — test via backend API tests |
+| Question | How it's answered |
+|----------|------------------|
+| Does the frontend + backend work together? | Playwright opens a real Chrome, logs into the real app, performs real actions |
+| Are API response formats correct? | If frontend can't display data from the real backend, the test fails |
+| Do multi-role workflows work? | Test logs in as Student → submits request → logs in as Manager → approves it |
+| Does auth actually protect pages? | Test tries to access pages without login, verifies redirect |
 
-### 14.2 Frontend Testing Stack
+### 14.2 E2E Testing Stack
 
 | Tool | Purpose |
 |------|---------|
-| **Vitest** | Test runner (built into Vite ecosystem) |
-| **React Testing Library** | Render components, simulate user interactions |
-| **MSW (Mock Service Worker)** | Mock backend API responses (no real server needed) |
-| **@testing-library/user-event** | Simulate realistic user input (typing, clicking) |
+| **Playwright** | Opens a real browser, clicks real buttons, fills real forms |
+| **Real Django server** | Backend runs on `http://127.0.0.1:8000` |
+| **Real Vite server** | Frontend runs on `http://localhost:5173` |
+| **Real PostgreSQL** | Actual database with real data |
 
-### 14.3 Quick Start — Frontend
+### 14.3 Setup (One-Time)
 
 ```bash
 # From Fusion-client/ directory
 
-# 1. Install test dependencies (one-time)
-npm install -D vitest @testing-library/react @testing-library/jest-dom \
-  @testing-library/user-event jsdom msw
+# 1. Install Playwright
+npm install -D @playwright/test
+npx playwright install chromium
 
-# 2. Setup framework for your module
-node _frontend_testing_framework/setup_frontend_tests.js <ModuleName>
-# Example: node _frontend_testing_framework/setup_frontend_tests.js Examination
-
-# 3. Update vite.config.js (one-time — add test config)
-
-# 4. Write tests in src/Modules/<ModuleName>/__tests__/
-
-# 5. Run (single command)
-npx vitest run src/Modules/<ModuleName>
+# 2. Update test credentials with REAL users from your database
+#    Edit: e2e/helpers/auth.setup.js
+#    Set real username/password for student, staff, faculty roles
 ```
 
-### 14.4 Vite Config Update
+### 14.4 Run Everything (Single Command)
 
-Add the `test` block to your `vite.config.js`:
+```bash
+# From Fusion-client/ directory
+./e2e/run_e2e.sh
+```
+
+This script automatically:
+1. Starts the Django backend server
+2. Starts the Vite frontend server
+3. Waits for both to be ready
+4. Runs all Playwright E2E tests
+5. Captures screenshots as evidence
+6. Generates CSV reports (same 7-sheet format)
+7. Stops both servers
+
+### 14.5 E2E File Structure
+
+```
+Fusion-client/
+├── playwright.config.js             ← Playwright configuration
+└── e2e/
+    ├── run_e2e.sh                   ← 🔥 Single command to run everything
+    ├── helpers/
+    │   ├── auth.setup.js            ← Login helper (EDIT: set real credentials)
+    │   └── csv-reporter.js          ← Generates 7-sheet CSVs from results
+    ├── tests/
+    │   ├── uc.e2e.spec.js           ← UC tests (replace examples with yours)
+    │   ├── br.e2e.spec.js           ← BR tests
+    │   └── wf.e2e.spec.js           ← WF tests
+    └── reports/                     ← Auto-generated
+        ├── evidence/                ← Screenshots (auto-captured)
+        ├── html/                    ← Visual HTML report
+        ├── Module_Test_Summary.csv
+        ├── Test_Execution_Log.csv
+        ├── Defect_Log.csv
+        └── Artifact_Evaluation.csv
+```
+
+### 14.6 Test Naming Convention (Required for Reports)
+
+Test titles **must** start with the spec ID for automatic CSV generation:
 
 ```js
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+// Use Case tests
+test("UC-1-HP-01: Student submits feedback successfully")
+test("UC-1-AP-01: Different feedback types work")
+test("UC-1-EX-01: Empty description shows error")
 
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: "./src/Modules/<YourModule>/__tests__/setup.js",
-    css: true,
-  },
-});
+// Business Rule tests
+test("BR-1-V-01: 4-day casual leave accepted")
+test("BR-1-I-01: 1-day casual leave rejected")
+
+// Workflow tests
+test("WF-1-E2E-01: Student applies, manager approves")
+test("WF-1-NEG-01: Student applies, manager rejects")
 ```
 
-Add scripts to `package.json`:
+The CSV reporter parses these IDs to auto-generate Sheet 5, 6, and 7.
 
-```json
-{
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
-  }
-}
-```
+### 14.7 E2E Test Patterns
 
-### 14.5 Frontend File Structure
-
-```
-src/Modules/<YourModule>/
-├── __tests__/                    ← Created by setup script
-│   ├── setup.js                  ← Mantine/browser mocks
-│   ├── mocks/
-│   │   ├── handlers.js           ← MSW API mock handlers
-│   │   └── server.js             ← MSW server setup
-│   ├── specs/
-│   │   ├── use_cases.yaml        ← UC spec (same format as backend)
-│   │   ├── business_rules.yaml   ← BR spec
-│   │   └── workflows.yaml        ← WF spec
-│   ├── uc.test.jsx               ← UC tests
-│   ├── br.test.jsx               ← BR tests
-│   └── wf.test.jsx               ← WF tests
-├── yourComponent.jsx
-└── ...
-```
-
-### 14.6 How MSW Works (Mocking the Backend)
-
-Instead of running the Django backend, MSW intercepts HTTP requests and returns mock data:
+#### Pattern 1: UC — Test a Feature in the Real UI
 
 ```js
-// __tests__/mocks/handlers.js
-import { http, HttpResponse } from "msw";
+import { test, expect } from "@playwright/test";
+import { loginAs, navigateToModule } from "../helpers/auth.setup.js";
 
-export const handlers = [
-  // Mock GET /mess/api/feedbackApi
-  http.get("/mess/api/feedbackApi", () => {
-    return HttpResponse.json({
-      status: 200,
-      payload: [
-        { id: 1, feedback_type: "food", description: "Great food" },
-      ],
+test.describe("UC-2: Submit Feedback", () => {
+
+  test.beforeEach(async ({ page }) => {
+    await loginAs(page, "student");       // Real login
+    await navigateToModule(page, "/mess"); // Real navigation
+  });
+
+  test("UC-2-HP-01: Student submits feedback", async ({ page }) => {
+    await page.click("text=Feedback");
+    await page.fill('[name="description"]', "Good food");
+    await page.click('button:has-text("Submit")');
+
+    await expect(page.locator("text=submitted")).toBeVisible();
+
+    // Screenshot saved as evidence for Test_Execution_Log
+    await page.screenshot({
+      path: "e2e/reports/evidence/UC-2-HP-01.png",
     });
-  }),
-
-  // Mock POST — success
-  http.post("/mess/api/feedbackApi", async ({ request }) => {
-    const body = await request.json();
-    if (!body.description) {
-      return HttpResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
-    return HttpResponse.json({ status: 200 });
-  }),
-];
-
-// Error scenarios (use in specific tests)
-export const errorHandlers = [
-  http.get("/mess/api/feedbackApi", () => {
-    return HttpResponse.json({ error: "Server down" }, { status: 500 });
-  }),
-];
-```
-
-### 14.7 Frontend Test Patterns
-
-#### Pattern 1: UC — Component Renders Correctly
-
-```jsx
-import { render, screen } from "@testing-library/react";
-import { MantineProvider } from "@mantine/core";
-import { BrowserRouter } from "react-router-dom";
-import FeedbackPage from "../FeedbackPage.jsx";
-
-describe("UC-1: View Feedback List", () => {
-  it("HP-01: Page renders and displays feedback items", async () => {
-    render(
-      <MantineProvider>
-        <BrowserRouter>
-          <FeedbackPage />
-        </BrowserRouter>
-      </MantineProvider>
-    );
-
-    // Wait for data to load from mocked API
-    const item = await screen.findByText(/Great food/i);
-    expect(item).toBeInTheDocument();
   });
 });
 ```
 
-#### Pattern 2: BR — Form Validation in UI
+#### Pattern 2: BR — Test Constraint Enforcement
 
-```jsx
-import userEvent from "@testing-library/user-event";
+```js
+test.describe("BR-2: Casual Leave 3-5 Day Constraint", () => {
 
-describe("BR-1: Description is required", () => {
-  it("I-01: Submit button disabled when description is empty", async () => {
-    render(/* FeedbackForm with providers */);
-    const submitBtn = screen.getByRole("button", { name: /submit/i });
-
-    // Try clicking without filling description
-    await userEvent.click(submitBtn);
-    expect(screen.getByText(/required/i)).toBeInTheDocument();
+  test("BR-2-V-01: 4-day leave accepted", async ({ page }) => {
+    await loginAs(page, "student");
+    await navigateToModule(page, "/mess");
+    await page.fill('[name="start_date"]', '2026-05-01');
+    await page.fill('[name="end_date"]', '2026-05-04');
+    await page.click('button:has-text("Apply")');
+    await expect(page.locator("text=submitted")).toBeVisible();
   });
 
-  it("V-01: Form submits when description is filled", async () => {
-    render(/* FeedbackForm with providers */);
-    await userEvent.type(screen.getByLabelText(/description/i), "Good food");
-    await userEvent.click(screen.getByRole("button", { name: /submit/i }));
-
-    // Verify success notification
-    expect(await screen.findByText(/submitted/i)).toBeInTheDocument();
-  });
-});
-```
-
-#### Pattern 3: WF — Multi-Step User Flow
-
-```jsx
-describe("WF-1: Apply for Leave Flow", () => {
-  it("E2E-01: Student fills form → submits → sees pending status", async () => {
-    render(/* LeavePage with providers */);
-
-    // Step 1: Select leave type
-    await userEvent.click(screen.getByText(/casual/i));
-
-    // Step 2: Fill dates
-    await userEvent.type(screen.getByLabelText(/start/i), "2026-04-10");
-    await userEvent.type(screen.getByLabelText(/end/i), "2026-04-13");
-
-    // Step 3: Fill purpose
-    await userEvent.type(screen.getByLabelText(/purpose/i), "Family event");
-
-    // Step 4: Submit
-    await userEvent.click(screen.getByRole("button", { name: /apply/i }));
-
-    // Step 5: Verify pending status appears
-    expect(await screen.findByText(/pending/i)).toBeInTheDocument();
-  });
-
-  it("NEG-01: Past dates show error in UI", async () => {
-    render(/* LeavePage */);
-    await userEvent.type(screen.getByLabelText(/start/i), "2020-01-01");
-    await userEvent.click(screen.getByRole("button", { name: /apply/i }));
-    expect(await screen.findByText(/invalid|past/i)).toBeInTheDocument();
+  test("BR-2-I-01: 1-day leave rejected", async ({ page }) => {
+    await loginAs(page, "student");
+    await navigateToModule(page, "/mess");
+    await page.fill('[name="start_date"]', '2026-05-01');
+    await page.fill('[name="end_date"]', '2026-05-01');
+    await page.click('button:has-text("Apply")');
+    await expect(page.locator("text=minimum")).toBeVisible();
   });
 });
 ```
 
-#### Pattern 4: Test Error State from API
+#### Pattern 3: WF — Multi-Role Workflow (Most Powerful)
 
-```jsx
-import { server } from "./mocks/server.js";
-import { errorHandlers } from "./mocks/handlers.js";
+```js
+test.describe("WF-2: Leave Request → Manager Approval", () => {
 
-describe("UC-1: Error Handling", () => {
-  it("EX-01: Shows error message when API fails", async () => {
-    // Override handlers for this test only
-    server.use(...errorHandlers);
+  test("WF-2-E2E-01: Student applies, manager approves", async ({ page, context }) => {
 
-    render(/* FeedbackPage with providers */);
+    // ── Step 1: Student applies for leave ──
+    await loginAs(page, "student");
+    await navigateToModule(page, "/mess");
+    await page.click("text=Apply Leave");
+    await page.fill('[name="start_date"]', '2026-05-01');
+    await page.fill('[name="end_date"]', '2026-05-04');
+    await page.click('button:has-text("Apply")');
+    await expect(page.locator("text=submitted")).toBeVisible();
+    await page.screenshot({ path: "e2e/reports/evidence/WF-2-step1.png" });
 
-    // Should show error UI after failed API call
-    expect(await screen.findByText(/error|failed/i)).toBeInTheDocument();
+    // ── Step 2: Manager approves (new browser tab, different user) ──
+    const managerPage = await context.newPage();
+    await loginAs(managerPage, "staff");
+    await navigateToModule(managerPage, "/mess");
+    await managerPage.click("text=Pending");
+    await managerPage.click('button:has-text("Approve")');
+    await managerPage.screenshot({ path: "e2e/reports/evidence/WF-2-step2.png" });
+    await managerPage.close();
+
+    // ── Step 3: Student verifies approval ──
+    await page.reload();
+    await expect(page.locator("text=Approved")).toBeVisible();
+    await page.screenshot({ path: "e2e/reports/evidence/WF-2-step3.png" });
   });
 });
 ```
 
-### 14.8 Running Frontend Tests
-
-```bash
-# From Fusion-client/ directory
-
-# Run all frontend tests
-npx vitest run
-
-# Run tests for a specific module only
-npx vitest run src/Modules/Examination
-
-# Run with coverage
-npx vitest run --coverage
-
-# Run in watch mode (re-runs on file change)
-npx vitest
-
-# Run a specific test file
-npx vitest run src/Modules/Examination/__tests__/uc.test.jsx
-```
-
-### 14.9 How Backend + Frontend Tests Fit Together
+### 14.8 How Backend + E2E Tests Fit Together
 
 ```
- ┌─────────────────────────────────────────────────────┐
- │              YOUR MODULE'S TESTING                  │
- ├─────────────────────┬───────────────────────────────┤
- │  BACKEND (Django)   │  FRONTEND (React)             │
- │                     │                               │
- │  Tests API logic:   │  Tests UI behavior:           │
- │  • Does POST create │  • Does form render?          │
- │    a DB record?     │  • Does validation show       │
- │  • Does validation  │    error messages?             │
- │    reject bad data? │  • Does success notification   │
- │  • Does workflow    │    appear after submit?        │
- │    update state?    │  • Does table display data?    │
- │                     │                               │
- │  Tool: Django       │  Tool: Vitest +               │
- │  TestCase +         │  React Testing Library +      │
- │  APIClient          │  MSW (mocked APIs)            │
- │                     │                               │
- │  Command:           │  Command:                     │
- │  python manage.py   │  npx vitest run               │
- │  test apps.<mod>    │  src/Modules/<Mod>            │
- │  .tests -v 2       │                               │
- │                     │                               │
- │  Reports: 7 CSVs    │  Reports: Vitest console +    │
- │  (auto-generated)   │  coverage HTML                │
- └─────────────────────┴───────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │               YOUR MODULE'S TESTING                    │
+ ├──────────────────────┬─────────────────────────────────┤
+ │  BACKEND TESTS       │  E2E TESTS (Playwright)         │
+ │  (Django TestCase)   │                                 │
+ │                      │                                 │
+ │  Tests in isolation: │  Tests EVERYTHING connected:    │
+ │  • API logic correct │  • Real browser opens UI        │
+ │  • DB state changes  │  • Real login to real backend   │
+ │  • Validation rules  │  • Real forms, real API calls   │
+ │  • No browser needed │  • Real DB state changes        │
+ │                      │  • Multi-role workflows          │
+ │                      │  • Auto-screenshots as evidence  │
+ │                      │                                 │
+ │  Command:            │  Command:                       │
+ │  python manage.py    │  ./e2e/run_e2e.sh               │
+ │  test apps.<mod>     │                                 │
+ │  .tests -v 2         │  (starts both servers, runs     │
+ │                      │   tests, generates reports,     │
+ │  Reports: 7 CSVs     │   stops servers)                │
+ │  (auto-generated)    │                                 │
+ │                      │  Reports: 7 CSVs + screenshots  │
+ │                      │  + HTML report + video on fail   │
+ └──────────────────────┴─────────────────────────────────┘
 ```
 
 > [!TIP]
-> **Both count towards your deliverables.** If your module has a working frontend, your UC/BR/WF test counts include BOTH backend AND frontend tests. For example, UC-1 can have `test_hp01` in backend (API test) AND `uc.test.jsx HP-01` in frontend (UI render test). Both contribute to your adequacy %.
+> **Both count towards your deliverables.** Backend tests verify API correctness fast (no browser). E2E tests prove the full system works end-to-end. Combined, they give you maximum coverage and evidence.
+
+### 14.9 Running E2E Tests (Commands)
+
+```bash
+# Full automated run (recommended)
+./e2e/run_e2e.sh
+
+# Or manually (if servers are already running):
+npx playwright test                              # All tests
+npx playwright test e2e/tests/uc.e2e.spec.js     # UC tests only
+npx playwright test e2e/tests/br.e2e.spec.js     # BR tests only
+npx playwright test e2e/tests/wf.e2e.spec.js     # WF tests only
+
+# Generate CSV reports after manual run
+node e2e/helpers/csv-reporter.js
+
+# View HTML report
+npx playwright show-report e2e/reports/html
+
+# Debug a failing test (opens browser visually)
+npx playwright test --headed --debug
+```
 
 ---
 
@@ -1084,18 +1036,19 @@ BACKEND (Fusion/FusionIIIT/)
         ├── (same structure as framework)
         └── reports/                          ← Auto-generated CSVs
 
-FRONTEND (Fusion-client/)
-├── _frontend_testing_framework/
-│   └── setup_frontend_tests.js               ← Run: node setup_frontend_tests.js <Module>
-└── src/Modules/<YourModule>/
-    └── __tests__/                            ← Created by setup script
-        ├── setup.js                          ← Mantine/browser mocks
-        ├── mocks/
-        │   ├── handlers.js                   ← MSW API mock handlers
-        │   └── server.js                     ← MSW server
-        ├── specs/                            ← Same YAML format
-        ├── uc.test.jsx                       ← UC tests
-        ├── br.test.jsx                       ← BR tests
-        └── wf.test.jsx                       ← WF tests
+E2E / FULL-STACK (Fusion-client/)
+├── playwright.config.js                      ← Playwright configuration
+└── e2e/
+    ├── run_e2e.sh                            ← 🔥 Single command for everything
+    ├── helpers/
+    │   ├── auth.setup.js                     ← Login helper (set real credentials)
+    │   └── csv-reporter.js                   ← Generates 7-sheet CSVs
+    ├── tests/
+    │   ├── uc.e2e.spec.js                    ← UC E2E tests
+    │   ├── br.e2e.spec.js                    ← BR E2E tests
+    │   └── wf.e2e.spec.js                    ← WF E2E tests
+    └── reports/
+        ├── evidence/                         ← Auto-captured screenshots
+        └── *.csv                             ← 7-sheet workbook CSVs
 ```
 
