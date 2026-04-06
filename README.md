@@ -3,6 +3,8 @@
 > **Approach:** Specification-driven, black-box testing  
 > **Backend:** `python manage.py test applications.<module>.tests -v 2`  
 
+> **[Live Example of Scholarship Module (You can checkout)](https://github.com/vikrantwiz02/FusionTestingGuide/tree/main/BackendTestingExample)**
+
 ---
 
 ## Table of Contents
@@ -775,6 +777,3 @@ This happens when the overall FusionIIIT repository has broken test migrations u
 **Quick Fix:**
 1. Try running your test suite by adding `--keepdb` to the end of the testing command.
 2. If this is a global error restricting all tests broadly, backend maintainers must fix their base `models.py` logic vs migrations configuration.
-
-
----
