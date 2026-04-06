@@ -1,0 +1,13 @@
+WF_ID,Title,Category,Scenario,Expected Final State
+SPACS-WF-101,Apply → Verify → Approve/Reject → Grant,End-to-End,"Student submits MCM application → Assistant verifies → Convener approves → Merit list generated with approved student
+","MCM application status=approved; all intermediate statuses correctly transitioned (pending → verified → approved)
+"
+SPACS-WF-101,Apply → Verify → Approve/Reject → Grant,Negative,"Student submits MCM application → Assistant verifies → Convener rejects → Student notified of rejection
+","MCM application status=rejected; no merit list entry; status transitioned (pending → verified → rejected)
+"
+SPACS-WF-201,Amend / Withdraw Pending,End-to-End,"Assistant reverts MCM application → Student edits reverted application → Status returns to pending → Assistant re-verifies
+","Application status=verified after full amend cycle; transitions: pending → reverted → pending → verified
+"
+SPACS-WF-201,Amend / Withdraw Pending,Negative,"Student attempts to modify an application that is already approved (finalized) → System blocks the update
+","Application status unchanged (remains approved); update rejected with finalization error
+"

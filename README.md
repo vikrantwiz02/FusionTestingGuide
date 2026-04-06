@@ -768,4 +768,13 @@ self.today()          # Today's date string
 
 The runner **automatically** logs it in `Defect_Log.csv`. The test will appear as "Fail" in the execution log and the defect will include the error traceback.
 
+### Q: I am getting `django.db.utils.ProgrammingError: relation "xyz" does not exist` when I run setup tests!
+
+This happens when the overall FusionIIIT repository has broken test migrations unrelated to your module. 
+
+**Quick Fix:**
+1. Try running your test suite by adding `--keepdb` to the end of the testing command.
+2. If this is a global error restricting all tests broadly, backend maintainers must fix their base `models.py` logic vs migrations configuration.
+
+
 ---
